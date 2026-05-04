@@ -1,0 +1,32 @@
+services:
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs,kms,iam,s3
+      - DEBUG=0
+      - LOCALSTACK_AUTH_TOKEN=ls-GiKu5827-rUcu-herE-jimu-moGe76740389
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  app:
+    build: .
+    container_name: sqs-app
+    depends_on:
+      - localstack
+    volumes:
+      - ./code:/app
+    working_dir: /app
+    ports:
+      - "8080:8080"
+    command: >
+      sh -c "sleep 10 &&
+             python setup.py &&
+             python producteur.py &&
+             python consommateur.py &&
+             python etranger.py &&
+             python stockage.py &&
+             python visualiser.py &&
+             python dashboard.py"
