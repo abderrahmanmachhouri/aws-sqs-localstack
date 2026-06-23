@@ -7,7 +7,7 @@ services:
     environment:
       - SERVICES=sqs,kms,iam,s3
       - DEBUG=0
-      - LOCALSTACK_AUTH_TOKEN=ls-GiKu5827-rUcu-herE-jimu-moGe76740389
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_TOKEN}
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
 

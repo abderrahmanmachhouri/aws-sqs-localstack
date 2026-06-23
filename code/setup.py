@@ -54,21 +54,25 @@ with open("/app/config.json", "w") as f:
 print("Config sauvegardee !")
 
 print("\nSETUP TERMINE !\n")
-# Politique qui bloque HTTPS non securise
+
+# Politique IAM — Seulement Producteur et Consommateur
+producteur_arn = "arn:aws:iam::000000000000:user/producteur"
+consommateur_arn = "arn:aws:iam::000000000000:user/consommateur"
+
 policy = {
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "ProducteurWrite",
+            "Sid": "AutoriserProducteur",
             "Effect": "Allow",
-            "Principal": {"AWS": "arn:aws:iam::000000000000:user/producteur"},
+            "Principal": {"AWS": producteur_arn},
             "Action": ["sqs:SendMessage"],
             "Resource": "*"
         },
         {
-            "Sid": "ConsommateurRead", 
+            "Sid": "AutoriserConsommateur",
             "Effect": "Allow",
-            "Principal": {"AWS": "arn:aws:iam::000000000000:user/consommateur"},
+            "Principal": {"AWS": consommateur_arn},
             "Action": [
                 "sqs:ReceiveMessage",
                 "sqs:DeleteMessage",
@@ -77,7 +81,7 @@ policy = {
             "Resource": "*"
         },
         {
-            "Sid": "BloquerEtranger",
+            "Sid": "BloquerTousLesAutres",
             "Effect": "Deny",
             "Principal": {"AWS": "*"},
             "Action": "sqs:*",
@@ -85,8 +89,8 @@ policy = {
             "Condition": {
                 "ArnNotLike": {
                     "aws:PrincipalArn": [
-                        "arn:aws:iam::000000000000:user/producteur",
-                        "arn:aws:iam::000000000000:user/consommateur"
+                        producteur_arn,
+                        consommateur_arn
                     ]
                 }
             }
@@ -99,3 +103,15 @@ sqs.set_queue_attributes(
     Attributes={"Policy": json.dumps(policy)}
 )
 print("OK Politique d'acces appliquee !")
+
+# Creer les utilisateurs IAM
+iam = client("iam")
+print("\n Creation utilisateurs IAM...")
+
+iam.create_user(UserName="producteur")
+iam.create_access_key(UserName="producteur")
+print("OK Utilisateur 'producteur' cree !")
+
+iam.create_user(UserName="consommateur")
+iam.create_access_key(UserName="consommateur")
+print("OK Utilisateur 'consommateur' cree !")
